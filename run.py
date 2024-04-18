@@ -6,6 +6,7 @@ from DBconn import FetchDB
 from GetData import getData
 from CategoryGen3 import CTGR3
 from CategoryGen4 import CTGR4 
+from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_file", requred=True, help="JSON input file")
@@ -79,7 +80,38 @@ def cate_result(dt_df, cr_dict, p_no):
             
     return cate_sum
 
+def table_insert(res_df, op_hour):
+    """
+    결과 데이터를 분기(OP_CAT, OPCAT_SUM)하여 각 테이블에 DATA INSERT
+    """
+    res_df = res_df.drop_duplicates(keep='first')
+    opcat_df = (
+        res_df
+        .drop(['DURATION'], axis=1)[['RAID', 'RULEID', 'START_TIME', 'END_TIME']]
+    )
+    opcat_sum_df = (
+        res_df
+        .groupby(['RAID', 'RULEID'])
+        .agg({'DURATION': 'sum'})
+        .assign(OCCUR_TIME= lambda x: (x['DURATION']/(op_hour*3600))*100)
+        .reset_index()
+    )
+    output1 = dbobj.insert_data(opcat_df, issum=0)
+    output2 = dbobj.insert_data(opcat_sum_df, issum=1)
+    
+    return output1, output2 
 
+def main(db, cr_dict):
+    tag_info, raid = get_meta(db)
+    cate_results = pd.DataFrame()
+    
+    for i, (_, row) in tqdm(enumerate(raid.iterrows()), total=raid.shape[0]):
+        code = str(row.CODE)
+        if row.PLANT_ID =='P04': p_no = 4
+        else: p_no = 3 
+        
+        path = Path.cwd() / f'p0{p_no}'
+        path1 = path + code 
 
-
+        
 
