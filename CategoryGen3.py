@@ -78,7 +78,49 @@ class CTGR3:
                 data_hunt['HUNT'] =0
             
         return data_hunt 
-
+    '''
+    카테고리 생성  
+    '''
+    def init_category_gen(self, df):
+        for rule_id, cr in self.cr_dict.items():
+            cat_df = rule_id.split('-')[0]
+            if cat_id =='D_TD': 
+                if ('액온도1' in df.columns) and ('액온도2' in df.columns):
+                    c1 = df['ProcValve']==cr.get('pv')
+                    c2 = (df['전류'] >= cr.get('amp1')) & (df['전류'] <= cr.get('amp2'))
+                    c3 = (df['액온도1'] < cr.get('tz1')) | (df['액온도2'] < cr.get('tz2'))
+                    df[rule_id] = np.where(c1 & c2 &c3, 1, 0)
+                    
+            elif cat_id =='D_TI':
+                if ('액온도1' in df.columns) and ('액온도2' in df.columns):
+                    c1 = df['ProcValve']==cr.get('pv')
+                    c2 = (df['전류'] >= cr.get('amp1')) & (df['전류'] <= cr.get('amp2'))
+                    c3 = (df['액온도1'] > cr.get('tz1')) | (df['액온도2'] > cr.get('tz2'))
+                    df[rule_id] = np.where(c1 & c2 &c3, 1, 0)
+                    
+            elif cat_id =='B_CWO':
+                c = df['AmpSumm'] < cr.get('ampsum')
+                c1 = df['ProcValve']==cr.get('pv')
+                c2 = df['전류'] < cr.get('amp')
+                c3 = df['CW_CV'] > cr.get('cw')
+                df[rule_id] = np.where(c &c1 & c2 &c3, 1, 0)            
+                
+            elif cat_id =='B_LLU':
+                c = df['AmpSumm'] < cr.get('ampsum')
+                c1 = df['전류'] < cr.get('amp')
+                c2 = df['ProcValve']==cr.get('pv')
+                if ('높이L' in df.columns) and ('높이LL' in df.columns):
+                    c3 = (df['높이L'] == cr.get('lv1')) | (df['높이LL'] == cr.get('lv2'))
+                    df[rule_id] = np.where(c &c1 & c2 &c3, 1, 0)     
+                else: df[rule_id] = np.nan
+                    
+            elif cat_id =='B_TD': 
+                if ('액온도1' in df.columns) and ('액온도2' in df.columns):
+                    c1 =  df['AmpSumm'] < cr.get('ampsum')
+                    c2 = df['전류'] < cr.get('amp')
+                    c2 = df['ProcValve']==cr.get('pv')
+                    c3 = (df['액온도1'] > cr.get('tz1')) | (df['액온도2'] > cr.get('tz2'))
+                    df[rule_id] = np.where(c& c1 & c2 &c3, 1, 0)          
 
 
 
