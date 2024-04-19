@@ -113,5 +113,42 @@ def main(db, cr_dict):
         path = Path.cwd() / f'p0{p_no}'
         path1 = path + code 
 
+        str_time, end_time = row.OP_START, row.OP_END
+        dt_list = pd.date_range(str_time.date(), end_time.date(), freq='D').strftime('%Y%m%d').tolist()
+        gd= getData(tag_info, path1, dt_list)
+        
+        for dt in dt_list:
+            try: action, dt_df = gd.get_day_data(dt, str_time, end_time)  # 하루 단위 데이터 
+            except UnboundLocalError as e: pass
+            if action =='continue': continue
+                
+            dt_dt = gd.data_organize(dt_df)
+            cate_sum = (
+                cate_result(dt_df, cr_dict, p_no)
+                .assign(RAID = row.RAID)
+            )
+
+        output1, output2 = table_insert(cate_results, op_hour = row.OP_HOUR)
+        print(output1, output2)
+
+if __name__=='__main__':
+    with open(args.input_file, 'r') as f:
+        try:
+            input_data = json.load(f)
+        except json.JSONDecodeError:
+            print('{',
+                  f'"inst_id" : " ", "Result": "Fail, Not a valid JSON string", "output": -1',
+                  '}')   
+    main(dbobj, input_data)
+
+
+
+
+
+
+
+
+
+
         
 
