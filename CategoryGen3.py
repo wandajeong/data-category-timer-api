@@ -116,14 +116,60 @@ class CTGR3:
                     
             elif cat_id =='B_TD': 
                 if ('액온도1' in df.columns) and ('액온도2' in df.columns):
-                    c1 =  df['AmpSumm'] < cr.get('ampsum')
-                    c2 = df['전류'] < cr.get('amp')
+                    c =  df['AmpSumm'] < cr.get('ampsum')
+                    c1 = df['전류'] < cr.get('amp')
+                    c2 = df['ProcValve']==cr.get('pv')
+                    c3 = (df['액온도1'] < cr.get('tz1')) | (df['액온도2'] < cr.get('tz2'))&(pd.isna(df['액온도2'])==False))
+                    df[rule_id] = np.where(c& c1 & c2 &c3, 1, 0)          
+                    
+            elif cat_id =='B_TI': 
+                if ('액온도1' in df.columns) and ('액온도2' in df.columns):
+                    c =  df['AmpSumm'] < cr.get('ampsum')
+                    c1 = df['전류'] < cr.get('amp')
                     c2 = df['ProcValve']==cr.get('pv')
                     c3 = (df['액온도1'] > cr.get('tz1')) | (df['액온도2'] > cr.get('tz2'))
                     df[rule_id] = np.where(c& c1 & c2 &c3, 1, 0)          
-
-
-
+                    
+            elif cat_id =='B_PLH': 
+                c1 = df['AmpSumm'] < cr.get('ampsum')
+                c2 = df['전류'] < cr.get('amp')
+                data = df[c1&c2]
+                hunt_df = self.level_hunting(data, cr)
+                df = df.join(hunt_df[['HUNT']]).rename(columns={'HUNT': rule_id})
+                
+            elif cat_id =='E_TD': 
+                if ('액온도1' in df.columns) and ('액온도2' in df.columns):
+                    c =  df['AmpSumm'] >= cr.get('ampsum')
+                    c1 = df['전류'] < cr.get('amp')
+                    c2 = df['ProcValve']==cr.get('pv')
+                    c3 = (df['액온도1'] < cr.get('tz1')) | (df['액온도2'] < cr.get('tz2'))&(pd.isna(df['액온도2'])==False))
+                    df[rule_id] = np.where(c& c1 & c2 &c3, 1, 0)          
+                    
+            elif cat_id =='E_TI': 
+                if ('액온도1' in df.columns) and ('액온도2' in df.columns):
+                    c =  df['AmpSumm'] >= cr.get('ampsum')
+                    c1 = df['전류'] < cr.get('amp')
+                    c2 = df['ProcValve']==cr.get('pv')
+                    c3 = (df['액온도1'] > cr.get('tz1')) | (df['액온도2'] > cr.get('tz2'))
+                    df[rule_id] = np.where(c& c1 & c2 &c3, 1, 0)                   
+                    
+            elif cat_id =='E_LLU': 
+                c = (df['AmpSumm'] >= cr.get('ampsum'))
+                c1 = df['전류'] < cr.get('amp')
+                if ('높이L' in df.columns) and ('높이LL' in df.columns):
+                    c2 = (df['높이L']==cr.get('lv1')) | (df['높이LL']==cr.get('lv2'))
+                    df[rule_id] = np.where(c&c1&c2, 1, 0)
+                else:
+                    df[rule_id] = np.nan
+            
+            elif cat_id =='E_PLH': 
+                c1 = df['AmpSumm'] >= cr.get('ampsum')
+                c2 = df['전류'] < cr.get('amp')
+                data = df[c1&c2]
+                hunt_df = self.level_hunting(data, cr)
+                df = df.join(hunt_df[['HUNT']]).rename(columns={'HUNT': rule_id})
+                
+        return df 
 
 
 
